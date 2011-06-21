@@ -25,7 +25,9 @@ class SVG_Element:
             self.children = []
     
     def addChildElement(self, type, attributes=None, child=None):
-        self.children.append(SVG_Element(type, attributes, child))    
+        child_element = SVG_Element(type, attributes, child)
+        self.children.append(child_element)
+        return child__element
     
     def output(self, nesting=0):
         svg_string = ' '*nesting + '<%s' % (self.type)
