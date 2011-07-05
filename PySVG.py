@@ -25,9 +25,12 @@ class SVG_Element:
             self.children = []
     
     def addChildElement(self, type, attributes=None, child=None):
-        child_element = SVG_Element(type, attributes, child)
-        self.children.append(child_element)
-        return child__element
+        """ Create an element with given type and atrributes and append to self.children.
+            Returns the child element. """
+        
+        child = SVG_Element(type, attributes, child)
+        self.children.append(child)
+        return child
     
     def output(self, nesting=0):
         svg_string = ' '*nesting + '<%s' % (self.type)
@@ -52,7 +55,7 @@ class SVG_Element:
         return svg_string
 
 class SVG(SVG_Element):
-    """ SVG element, output includes XML document string. """
+    """ SVG element with style element and output that includes XML document string. """
     
     def __init__(self, attributes=None):
         SVG_Element.__init__(self, 'svg', attributes, SVG_Style_Element())
@@ -70,6 +73,17 @@ class SVG(SVG_Element):
         for (key, value) in args:
             self.children[0].styles[element][key] = value
     
+    def outputToFile(self, filename):
+        """ Prints output to a given filename. Add a .svg extenstion if not given. """
+        
+        import os
+        if os.path.splitext(filename)[1] == '.svg':
+            f = file(filename, 'w')
+        else:
+            f = file("%s.svg" % filename, 'w')
+
+        f.write(self.output())
+    
     def output(self):
         svg_string  = '<?xml version="1.0"  encoding="UTF-8" standalone="no"?>\n'
         svg_string += '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n'
@@ -84,7 +98,7 @@ class SVG_Style_Element(SVG_Element):
         
     def output(self, nesting=0):
         if not self.styles:
-            return
+            return ''
         
         style_string = '<style>\n'
       
