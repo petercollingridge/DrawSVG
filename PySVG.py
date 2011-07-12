@@ -3,13 +3,14 @@
 #   Allow multiple style elements with links to be added
 #   Scripts
 #   Prefered order for output
-#   Nesting parameter
 #   Automatic id generation
 #   Get element by id
 
 class SVG_Element:
     """ Generic element with attributes and potential child elements.
         Outputs as <type attribute dict> child </type>."""
+    
+    indent = 4
     
     def __init__(self, type, attributes=None, child=None):
         self.type = type
@@ -33,23 +34,28 @@ class SVG_Element:
         return child
     
     def output(self, nesting=0):
-        svg_string = ' '*nesting + '<%s' % (self.type)
+        svg_string = '\n' + ' '*nesting*self.indent + '<%s' % (self.type)
         
         for key, value in self.attributes.items():
             svg_string += ' %s="%s"' % (key, value)
         
         if not self.children:
-            svg_string += '/>\n'
+            svg_string += '/>'
         else:
-            svg_string += '>\n'
+            svg_string += '>'
             
+            new_line = False
             for child in self.children:
                 if isinstance(child, SVG_Element):
                     svg_string += child.output(nesting+1)
+                    new_line = True
                 else:
-                    svg_string += ' '*(nesting+1) + '%s\n' % child
-                
-            svg_string += ' '*nesting + '</%s>\n' % (self.type)
+                    svg_string += child
+            
+            if new_line:
+                svg_string += '\n' + ' '*nesting*self.indent + '</%s>' % (self.type)
+            else:
+                svg_string += '</%s>' % (self.type)
             
         
         return svg_string
