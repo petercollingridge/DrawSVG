@@ -69,7 +69,4 @@ def example2():
 
 #my_svg = addRectElementInStages()
 my_svg = addCSSStyling()
-    
-# Write output to file
-fout = file('test.svg', 'w')
-fout.write(my_svg.output())
+my_svg.outputToFile('test.svg')
