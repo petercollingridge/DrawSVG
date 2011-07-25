@@ -1,0 +1,120 @@
+#   ***To do**
+#   Make style an SVG_Element
+#   Allow multiple style elements with links to be added
+#   Scripts
+#   Prefered order for output
+#   Automatic id generation
+#   Get element by id
+
+class SVG_Element:
+    """ Generic element with attributes and potential child elements.
+        Outputs as <type attribute dict> child </type>."""
+    
+    indent = 4
+    
+    def __init__(self, type, attributes=None, child=None):
+        self.type = type
+        
+        if attributes:
+            self.attributes = attributes
+        else:
+            self.attributes = {}
+        
+        if child:
+            self.children = [child]
+        else:
+            self.children = []
+    
+    def addChildElement(self, type, attributes=None, child=None):
+        """ Create an element with given type and atrributes and append to self.children.
+            Returns the child element. """
+        
+        child = SVG_Element(type, attributes, child)
+        self.children.append(child)
+        return child
+    
+    def output(self, nesting=0):
+        svg_string = '\n' + ' '*nesting*self.indent + '<%s' % (self.type)
+        
+        for key, value in self.attributes.items():
+            svg_string += ' %s="%s"' % (key, value)
+        
+        if not self.children:
+            svg_string += '/>'
+        else:
+            svg_string += '>'
+            
+            new_line = False
+            for child in self.children:
+                if isinstance(child, SVG_Element):
+                    svg_string += child.output(nesting+1)
+                    new_line = True
+                else:
+                    svg_string += child
+            
+            if new_line:
+                svg_string += '\n' + ' '*nesting*self.indent + '</%s>' % (self.type)
+            else:
+                svg_string += '</%s>' % (self.type)
+            
+        
+        return svg_string
+
+class SVG(SVG_Element):
+    """ SVG element with style element and output that includes XML document string. """
+    
+    def __init__(self, attributes=None):
+        SVG_Element.__init__(self, 'svg', attributes, SVG_Style_Element())
+        self.attributes['version'] = 1.1
+        self.attributes['xmlns'] = 'http://www.w3.org/2000/svg'
+        self.attributes['xmlns:xlink'] = 'http://www.w3.org/1999/xlink'
+
+    def addStyle(self, element, *args):
+        """ Add style to self.style dictionary
+            in the form addStyle(element (parameter1, value1), (parameter2, value2)) """
+   
+        if element not in self.children[0].styles:
+            self.children[0].styles[element] = {}
+
+        for (key, value) in args:
+            self.children[0].styles[element][key] = value
+    
+    def outputToFile(self, filename):
+        """ Prints output to a given filename. Add a .svg extenstion if not given. """
+        
+        import os
+        if os.path.splitext(filename)[1] == '.svg':
+            f = file(filename, 'w')
+        else:
+            f = file("%s.svg" % filename, 'w')
+
+        f.write(self.output())
+    
+    def output(self):
+        svg_string  = '<?xml version="1.0"  encoding="UTF-8" standalone="no"?>\n'
+        svg_string += '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n'
+        
+        svg_string +=  SVG_Element.output(self)
+            
+        return svg_string
+    
+class SVG_Style_Element(SVG_Element):
+    def __init__(self):
+        self.styles = {}
+        
+    def output(self, nesting=0):
+        if not self.styles:
+            return ''
+        
+        style_string = '<style>\n'
+      
+        for element, style in self.styles.items():
+            style_string += '  %s{\n' % element
+            
+            for key, value in style.items():
+                style_string += '    %s:\t%s;\n' % (key, value)
+            style_string += '  }\n'
+        
+        style_string += '  </style>\n\n'
+        
+        return style_string
