@@ -1,5 +1,4 @@
 #   ***To do**
-#   Make style an SVG_Element
 #   Allow multiple style elements with links to be added
 #   Scripts
 #   Prefered order for output
@@ -64,20 +63,21 @@ class SVG(SVG_Element):
     """ SVG element with style element and output that includes XML document string. """
     
     def __init__(self, attributes=None):
-        SVG_Element.__init__(self, 'svg', attributes, SVG_Style_Element())
+        SVG_Element.__init__(self, 'svg', attributes)
         self.attributes['version'] = 1.1
         self.attributes['xmlns'] = 'http://www.w3.org/2000/svg'
         self.attributes['xmlns:xlink'] = 'http://www.w3.org/1999/xlink'
+        
+        style_element = SVG_Style_Element()
+        self.styleDict = style_element.children
+        self.children.append(style_element)
 
-    def addStyle(self, element, *args):
-        """ Add style to self.style dictionary
-            in the form addStyle(element (parameter1, value1), (parameter2, value2)) """
-   
-        if element not in self.children[0].styles:
-            self.children[0].styles[element] = {}
+    def addStyle(self, element, attributes):
+        """ Add style to element in self.style.children using a dictionary in form {selector: value} """
 
-        for (key, value) in args:
-            self.children[0].styles[element][key] = value
+        if element not in self.styleDict:
+            self.styleDict[element] = {}
+        self.styleDict[element].update(attributes)
     
     def outputToFile(self, filename):
         """ Prints output to a given filename. Add a .svg extenstion if not given. """
@@ -100,15 +100,15 @@ class SVG(SVG_Element):
     
 class SVG_Style_Element(SVG_Element):
     def __init__(self):
-        self.styles = {}
+        self.children = {}
         
     def output(self, nesting=0):
-        if not self.styles:
+        if not self.children:
             return ''
         
         style_string = '<style>\n'
       
-        for element, style in self.styles.items():
+        for element, style in self.children.items():
             style_string += '  %s{\n' % element
             
             for key, value in style.items():
