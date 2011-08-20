@@ -1,5 +1,5 @@
 import math
-from PySVG import SVG
+from DrawSVG import SVG
 
 #       *** To Do **
 #   Allow x-values to be defined
@@ -55,13 +55,13 @@ class Graph(SVG):
     def _addDefaultStyles(self):
         """ Set default styles to style dictionary"""
     
-        self.addStyle('.background', ('fill','none'))
-        self.addStyle('.axis', ('stroke','#111'), ('stroke-width',0.5))
-        self.addStyle('.axis-label', ('font-size','14px'), ('font-family', 'Arial'), ('text-anchor', 'middle'))
-        self.addStyle('.axis-units', ('font-size','10px'), ('font-family', 'Arial'), ('text-anchor', 'middle'))
-        self.addStyle('.gridlines', ('stroke','black'), ('stroke-width', 0.5), ('fill',None), ('opacity',0.5))
-        self.addStyle('.data-series', ('stroke-width',1), ('fill', 'none'), ('opacity',1))
-        #self.addStyle('.data-series:hover', ('stroke-width',3), ('opacity',0.65))
+        self.addStyle('.background', {'fill':'none'})
+        self.addStyle('.axis', {'stroke':'#111', 'stroke-width':0.5})
+        self.addStyle('.axis-label', {'font-size': '14px', 'font-family': 'Arial', 'text-anchor': 'middle'})
+        self.addStyle('.axis-units', {'font-size':'10px', 'font-family':'Arial'})
+        self.addStyle('.y-axis-text', {'text-anchor': 'end'})
+        self.addStyle('.gridlines', {'stroke':'black', 'stroke-width':0.5, 'fill':'none', 'opacity':0.5})
+        self.addStyle('.data-series', {'stroke-width':1, 'fill':'none', 'opacity':1})
 
     def addDataFromFile(self, filename):
         """ Read in a tab-delimited file with a heading row and add to self.data dictionary """
@@ -77,7 +77,6 @@ class Graph(SVG):
             self.data[h] = []
         
         # Should treat first column as x value (unless only one column)
-        
         for line in fin.readlines():
             temp = line.rstrip('\n').split('\t')
             for i, h in enumerate(headings):
@@ -88,60 +87,23 @@ class Graph(SVG):
         self._determinePlottingFunctions()
         self._addBackground()
         self._addAxes()
-        self._drawAxisLabels()
+        self._drawAxisUnits()
         self._drawGridlines()
         self._plotData()
         return SVG.output(self)
 
     def _addBackground(self):
-        if self.children[0].styles['.background']['fill'] != 'none':
+        if self.children[0].children['.background'].get('fill', 'none') != 'none':
             self.addChildElement('rect',
                                 {'class':'background',
                                 'x':0, 'y':0,
                                 'width':self.attributes['width'],
                                 'height':self.attributes['height']})
 
-    def _addAxes(self):
-        if self.x_axis_label:
-            self.origin_x += 20
-        if self.y_axis_label:
-            self.origin_y += 20
-    
-        if self.x_axis_label:
-            x = 0.5*(self.origin_x + self.attributes['width'] - self.right_pad)
-            y = self.attributes['height'] - self.lower_pad
-            self.addChildElement('text',
-                                {'class':'axis-title', 'x': x, 'y': y},
-                                self.x_axis_label)
-
-        if self.y_axis_label:
-            x = self.left_pad
-            y = 0.5*(self.attributes['height'] - self.origin_y + self.upper_pad)
-            self.addChildElement('text',
-                                {'class':'axis-title', 'x': 0, 'y': y,
-                                'transform': 'translate(%.1f) rotate(-90, 0, %.1f)' % (x+5, y)},
-                                self.y_axis_label)
-
-        # Add tick marks/values
-
-        if self.x_axis:
-            self.addChildElement('line',
-                                {'class': 'axis',
-                                'x1': self.origin_x,
-                                'y1': self.attributes['height'] - self.origin_y,
-                                'x2': self.attributes['width'] - self.right_pad,
-                                'y2': self.attributes['height'] - self.origin_y})
-
-        if self.y_axis:
-            self.addChildElement('line',
-                                {'class': 'axis',
-                                'x1': self.origin_x,
-                                'y1': self.attributes['height'] - self.origin_y,
-                                'x2': self.origin_x,
-                                'y2': self.upper_pad})
-
     def _getDataDivisions(self):      
-        if not self.data: return
+        if not self.data:
+            return
+
         x_data = [data[0] for series in self.data.values() for data in series]
         y_data = [data[1] for series in self.data.values() for data in series]
     
@@ -166,28 +128,82 @@ class Graph(SVG):
         if not self.div_y:
             span_y = self.max_y - self.min_y
             self.div_y = math.pow(10, int(math.log(max([self.max_y, -self.min_y]), 10)))
-            if span_y/self.div_y > 6:
+            if span_y/self.div_y > 4:
                 self.div_y *= 2
-            elif span_y/self.div_y < 4:
+            elif span_y/self.div_y < 3:
                 self.div_y *= 0.5
 
         self.y_divisions = [y*self.div_y for y in range(-int(math.ceil(-self.min_y / self.div_y)), int(math.ceil(self.max_y / self.div_y))+1)]
         self.min_y = self.y_divisions[0]
-        
+
     def _determinePlottingFunctions(self):
+        if self.x_axis_label:
+            self.origin_y += 20
+        if self.y_axis_label:
+            self.origin_x += 20
+        
+        # Should calculate based on unit length
+        if self.x_axis_units:
+            self.origin_y += 16
+        if self.y_axis_units:
+            self.origin_x += 16
+            
         self.chart_width  = self.attributes['width'] - self.right_pad - self.origin_x
         self.chart_height = self.attributes['height'] - self.upper_pad - self.origin_y
         x_scaling_factor = self.chart_width  * 1.0 / (self.max_x - self.min_x)
         y_scaling_factor = self.chart_height * 1.0 / (self.y_divisions[-1] - self.y_divisions[0])
-
+        
         # Functions for converting x and y values into coordinates on the SVG
         self.f_x = lambda x: self.origin_x + x_scaling_factor * (x - self.min_x)
         self.f_y = lambda y: self.attributes['height'] - self.origin_y - y_scaling_factor * (y - self.min_y)
-    
+
+    def _addAxes(self):    
+        if self.x_axis_label:
+            x = 0.5*(self.origin_x + self.attributes['width'] - self.right_pad)
+            y = self.attributes['height'] - self.lower_pad
+            self.addChildElement('text',
+                                {'class':'axis-label', 'x': x, 'y': y},
+                                self.x_axis_label)
+
+        if self.y_axis_label:
+            x = self.left_pad
+            y = 0.5*(self.attributes['height'] - self.origin_y + self.upper_pad)
+            self.addChildElement('text',
+                                {'class':'axis-label', 'x': 0, 'y': y,
+                                'transform': 'translate(%.1f) rotate(-90, 0, %.1f)' % (x+5, y)},
+                                self.y_axis_label)
+
+        # Add tick marks/values
+        if self.x_axis:
+            self.addChildElement('line',
+                                {'class': 'axis',
+                                'x1': self.origin_x,
+                                'y1': self.attributes['height'] - self.origin_y,
+                                'x2': self.attributes['width'] - self.right_pad,
+                                'y2': self.attributes['height'] - self.origin_y})
+
+        if self.y_axis:
+            self.addChildElement('line',
+                                {'class': 'axis',
+                                'x1': self.origin_x,
+                                'y1': self.attributes['height'] - self.origin_y,
+                                'x2': self.origin_x,
+                                'y2': self.upper_pad})
+
     def _drawGridlines(self):
-        if self.draw_y_gridlines:
+        if self.x_gridlines or self.y_gridlines:
             gridline_group = self.addChildElement('g', {'class': 'gridlines'})
 
+        if self.x_gridlines:
+            for x in self.x_divisions[1:-1]:
+                gridline_x = int(self.f_x(x)) + 0.5
+                gridline_group.addChildElement('line',
+                                               {'x1': gridline_x,
+                                                'y1': self.attributes['height'] - self.origin_y,
+                                                'x2': gridline_x,
+                                                'y2': self.attributes['height'] - self.origin_y - self.chart_height})
+
+        if self.y_gridlines:
             for y in self.y_divisions[1:-1]:
                 gridline_y = int(self.f_y(y)) + 0.5
                 gridline_group.addChildElement('line',
@@ -196,8 +212,8 @@ class Graph(SVG):
                                                 'x2': self.origin_x + self.chart_width,
                                                 'y2': gridline_y})
 
-    def _drawAxisLabels(self):
-        label_group = self.addChildElement('g', {'class': 'axis-labels'})
+    def _drawAxisUnits(self):
+        label_group = self.addChildElement('g', {'class': 'axis-units y-axis-text'})
         
         if abs(self.y_divisions[1]) < 1:
             y_to_string = lambda y: '%.1f' % y
@@ -205,10 +221,7 @@ class Graph(SVG):
             y_to_string = lambda y: '%d' % y
         
         for y in self.y_divisions:
-            label_group.addChildElement('text',
-                                       {'x': self.origin_x,
-                                        'y': self.f_y(y)+3},
-                                        y_to_string(y))
+            label_group.addChildElement('text', {'x': self.origin_x-3, 'y': self.f_y(y)+3}, y_to_string(y))
         return
 
         #   x-axis labels
@@ -243,10 +256,11 @@ class Graph(SVG):
 
 if __name__ == '__main__':
     g = Graph({'width':600, 'height':360})
-    g.addStyle('.background', ('fill', '#dddddd'))
+    g.addStyle('.background', {'fill': '#ddd'})
     g.x_axis_label = "Time (ms)"
     g.y_axis_label = "Ratio"
+    g.x_axis_units = False
     g.min_y = 0
-    g.data={'Series 1':[(0,1),(1,4),(2,9),(3,16),(4,25)],
+    g.data={'Series 1':[(0,2),(1,26),(2,9),(3,16),(4,4)],
             'Series 2':[(1,0.1),(2,0.4),(3,0.9),(4,1.6),(5,2.5)]}
     g.outputToFile("test")
