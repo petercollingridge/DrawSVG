@@ -92,15 +92,7 @@ class Graph(SVG):
         self._plotData()
         return SVG.output(self)
 
-    def _addBackground(self):
-        if self.children[0].children['.background'].get('fill', 'none') != 'none':
-            self.addChildElement('rect',
-                                {'class':'background',
-                                'x':0, 'y':0,
-                                'width':self.attributes['width'],
-                                'height':self.attributes['height']})
-
-    def _getDataDivisions(self):      
+    def _getDataDivisions(self):
         if not self.data:
             return
 
@@ -154,8 +146,16 @@ class Graph(SVG):
         y_scaling_factor = self.chart_height * 1.0 / (self.y_divisions[-1] - self.y_divisions[0])
         
         # Functions for converting x and y values into coordinates on the SVG
-        self.f_x = lambda x: self.origin_x + x_scaling_factor * (x - self.min_x)
-        self.f_y = lambda y: self.attributes['height'] - self.origin_y - y_scaling_factor * (y - self.min_y)
+        self.f_x = lambda x: self.origin_x + x_scaling_factor * (x - self.x_divisions[0])
+        self.f_y = lambda y: self.attributes['height'] - self.origin_y - y_scaling_factor * (y - self.y_divisions[0])
+
+    def _addBackground(self):
+        if self.children[0].children['.background'].get('fill', 'none') != 'none':
+            self.addChildElement('rect',
+                                {'class':'background',
+                                'x':0, 'y':0,
+                                'width':self.attributes['width'],
+                                'height':self.attributes['height']})
 
     def _addAxes(self):    
         if self.x_axis_label:
@@ -254,13 +254,83 @@ class Graph(SVG):
                                  'stroke': self.colours[series],
                                  'd': path})
 
+class BarGraph(Graph):
+    """ Plots a horizontal bar chart. """
+
+    def __init__(self, attributes=None):
+        Graph.__init__(self, attributes)
+        
+        self.x_gridlines = False
+        self.x_axis_units = False
+        self.gap_width = 2
+
+        self.addStyle('.bar', {'fill': '#888', 'opacity': 0.7})
+        self.addStyle('.bar:hover', {'opacity': 1})
+
+    def addDataFromFile(self, filename):
+        """ Read in a tab-delimited file with a heading row and add to self.data dictionary """
+    
+        try:
+            fin = open(filename, 'r')
+        except IOError:
+            print "Could not open file", filename
+            return
+        
+        for line in fin.readlines():
+            (key, value) = line.rstrip().split('\t')
+            self.data[key] = float(value)
+
+    def output(self):
+        self._getDataDivisions()
+        self._determinePlottingFunctions()
+        self._addBackground()
+        self._addAxes()
+        self._drawAxisUnits()
+        self._drawGridlines()
+        self._plotData()
+        return SVG.output(self)
+
+    def _getDataDivisions(self):      
+        if not self.data:
+            return
+
+        if not self.max_x: self.max_x = len(self.data)
+        if not self.min_x: self.min_x = 0
+
+        y_data = self.data.values()
+        if not self.max_y: self.max_y = max(y_data)
+        if not self.min_y: self.min_y = min(y_data)
+
+        #   Calculate reasonable division for y-axis        
+        if not self.div_y:
+            span_y = self.max_y - self.min_y
+            self.div_y = math.pow(10, int(math.log(max([self.max_y, -self.min_y]), 10)))
+            if span_y/self.div_y > 4:
+                self.div_y *= 2
+            elif span_y/self.div_y < 3:
+                self.div_y *= 0.5
+
+        self.y_divisions = [y*self.div_y for y in range(-int(math.ceil(-self.min_y / self.div_y)), int(math.ceil(self.max_y / self.div_y))+1)]
+
+    def _plotData(self):
+        bar_width = (self.chart_width - self.gap_width) * 1.0 / len(self.data)
+        bar_group = self.addChildElement('g', {'transform': 'translate(%d %d) scale(1, -1)' % (self.origin_x, self.attributes['height'] - self.origin_y)})
+        
+        for n, value in enumerate(self.data.values()):
+            bar_group.addChildElement('rect',
+                                     {'class': 'bar',
+                                      'x': self.gap_width + n*bar_width,
+                                      'y': 0,
+                                      'width': bar_width-self.gap_width,
+                                      'height': value})
+
+
 if __name__ == '__main__':
-    g = Graph({'width':600, 'height':360})
-    g.addStyle('.background', {'fill': '#ddd'})
-    g.x_axis_label = "Time (ms)"
-    g.y_axis_label = "Ratio"
-    g.x_axis_units = False
-    g.min_y = 0
-    g.data={'Series 1':[(0,2),(1,26),(2,9),(3,16),(4,4)],
-            'Series 2':[(1,0.1),(2,0.4),(3,0.9),(4,1.6),(5,2.5)]}
+    g = BarGraph({'width':500, 'height':300})
+
+    g.addStyle('.background', {'fill': '#eee'})
+    g.x_axis_label = "Subjects"
+    g.y_axis_label = "Sentence / Video"
+
+    g.addDataFromFile('sentence_counts.txt')
     g.outputToFile("test")
