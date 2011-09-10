@@ -1,5 +1,5 @@
 import math
-from DrawSVG import SVG
+from drawSVG import SVG
 
 #       *** To Do **
 #   Don't plot lines that exceed a given min or max
