@@ -1,3 +1,5 @@
+import os
+import sys
 import math
 from drawSVG import SVG
 
@@ -354,17 +356,12 @@ class BarGraph(Graph):
 
 
 if __name__ == '__main__':
-    g = BarGraph({'width':500, 'height':300})
-
-    g.addStyle('.background', {'fill': '#000'})
-    g.addStyle('.gridlines', {'stroke': 'white'})
-    g.addStyle('.axis', {'stroke': 'white'})
-    g.addStyle('.axis-label', {'fill': 'white'})
-    g.addStyle('.axis-units', {'fill': 'white'})
-
-    g.x_axis_label = "Subjects"
-    g.y_axis_label = "Sentence / Video"
-
-    g.addDataFromFile('counts_sentences.txt')
-    g.data_order = sorted(g.data, key=lambda x: g.data[x])
-    g.outputToFile("test")
+    if len(sys.argv) > 1:
+        g = Graph()
+        g.addDataFromFile(sys.argv[1])
+        g.plot()
+        
+        if len(sys.argv) > 2:
+            g.outputToFile(sys.argv[2])
+        else:
+            g.outputToFile(os.path.splitext(sys.argv[1])[0])
