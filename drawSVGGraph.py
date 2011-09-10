@@ -21,7 +21,7 @@ class Graph(SVG):
         SVG.__init__(self, attributes)
         
         self.data = {}
-        self.data_order = []
+        self.series = []
         self.colours = ['#0060e5', '#001060', '#e52060', '#a00030', '#00c020', '#006010']
         
         self.left_pad  = 10.5
@@ -87,7 +87,6 @@ class Graph(SVG):
         for h in self.series:
             self.data[h] = []
         
-        # Should treat first column as x value (unless only one column)
         for line in fin.readlines():
             temp = line.rstrip('\n').split('\t')
             for i, h in enumerate(self.series):
@@ -306,47 +305,45 @@ class BarGraph(Graph):
         
         for line in fin.readlines():
             (key, value) = line.rstrip().split('\t')
+            self.series.append(key)
             self.data[key] = float(value)
-            self.data_order.append(key)
 
-    def output(self):
-        self._getDataDivisions()
-        self._determinePlottingFunctions()
+    def plot(self):
+        x_divisions = self._calculateDivisions(range(len(self.series)), self.min_x, self.max_x, self.div_x)
+        y_divisions = self._calculateDivisions(self.data.values(), self.min_y, self.max_y, self.div_y)
+        
+        self._determinePlottingFunctions(x_divisions, y_divisions)
         self._addBackground()
         self._addAxes()
-        self._drawAxisUnits()
-        self._drawGridlines()
-        self._plotData()
-        return SVG.output(self)
+        self._drawAxisUnits(x_divisions, y_divisions)
+        self._drawGridlines(x_divisions, y_divisions)
+        self._plotData(x_divisions, y_divisions)
 
-    def _getDataDivisions(self):      
-        if not self.data:
-            return
+    def _calculateDivisions(self, data, d_min=None, d_max=None, d_div=None):
 
-        if not self.max_x: self.max_x = len(self.data)
-        if self.min_x != 'None': self.min_x = 0
+        if d_min is None:
+            d_min = min(data)
+        if d_max is None:
+            d_max = max(data)
 
-        y_data = self.data.values()
-        if not self.max_y: self.max_y = max(y_data)
-        if self.min_y == 'None': self.min_y = min(y_data)
-
-        #   Calculate reasonable division for y-axis        
-        if not self.div_y:
-            span_y = self.max_y - self.min_y
-            self.div_y = math.pow(10, int(math.log(max([self.max_y, -self.min_y]), 10)))
-            if span_y/self.div_y > 4:
-                self.div_y *= 2
-            elif span_y/self.div_y < 3:
-                self.div_y *= 0.5
-
-        self.y_divisions = [y*self.div_y for y in range(-int(math.ceil(-self.min_y / self.div_y)), int(math.ceil(self.max_y / self.div_y))+1)]
-        print self.y_divisions
-
-    def _plotData(self):
-        bar_width = (self.chart_width - self.gap_width) * 1.0 / len(self.data)
-        bar_group = self.addChildElement('g', {'transform': 'translate(%d %d) scale(1, -%.3f)' % (self.origin_x, self.attributes['height'] - self.origin_y, self.chart_height * 1.0 / (self.y_divisions[-1] - self.y_divisions[0]))})
+        if not d_div:
+            d_div = math.pow(10, int(math.log(max([d_max, -d_min]), 10)))
+            if d_max/d_div > 5:
+                d_div *= 2
+            elif d_max/d_div < 3:
+                d_div *= 0.5
+                
+        divisions = [n * d_div for n in range(-int(math.ceil(-d_min / d_div)), int(math.ceil(d_max / d_div))+1)]
         
-        for n, bar in enumerate(self.data_order):
+        return divisions
+
+    def _plotData(self, x_divisions, y_divisions):
+        bar_width = (self.chart_width - self.gap_width) * 1.0 / len(self.data)
+        scale = self.chart_height * 1.0 / (y_divisions[-1] - y_divisions[0])
+        bar_group = self.addChildElement('g',
+                                        {'transform': 'translate(%d %d) scale(1, -%.3f)' % (self.origin_x, self.attributes['height'] - self.origin_y, scale)})
+        
+        for n, bar in enumerate(self.series):
             bar_group.addChildElement('rect',
                                      {'class': 'bar',
                                       'x': n*bar_width + self.gap_width,
