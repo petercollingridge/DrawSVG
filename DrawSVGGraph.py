@@ -2,14 +2,15 @@ import math
 from DrawSVG import SVG
 
 #       *** To Do **
-#   Allow x-values to be defined
-#       Fix read data to file to work with this
-#   Align axis values
-#   Get axis to work for numbers < 0
-#   Get axis divisions to work for numbers < 1
+#   Don't plot lines that exceed a given min or max
+#   Add commandline interface that allows options to be set
+#   Fix axis positions for numbers < 0
+#   Fix axis divisions for numbers < 1
+#   Fix alignment when y-axis values are negatives or floats
 #   Add tick marks to axes
 #   Add data labels - with mouseover?
-#   Get text alignments work with different font-sizes?
+#   Fix text alignments when using different font-sizes?
+#   Add series markers
 
 class Graph(SVG):
     """ Plots series of (x,y) data on a SVG line graph. """
@@ -18,18 +19,18 @@ class Graph(SVG):
         SVG.__init__(self, attributes)
         
         self.data = {}
-        self.colours = ['#000000']
+        self.data_order = []
         self.colours = ['#0060e5', '#001060', '#e52060', '#a00030', '#00c020', '#006010']
         
         self.left_pad  = 10.5
-        self.right_pad = 10.5
+        self.right_pad = 16.5
         self.upper_pad = 10.5
         self.lower_pad = 10.5
         self.origin_x = self.left_pad
         self.origin_y = self.lower_pad
         
         # Set default values if not already defined
-        self.attributes['width'] = self.attributes.get('width', 400)
+        self.attributes['width'] = self.attributes.get('width', 600)
         self.attributes['height'] = self.attributes.get('height', 400)
         
         # Axis options
@@ -42,7 +43,7 @@ class Graph(SVG):
         self.x_axis_label = None
         self.y_axis_label = None
         
-        # These are automatically generated based on the data but can be predefined
+        # These are automatically generated based on the data but can be overriden before plotting data
         self.min_x = None
         self.max_x = None
         self.div_x = None
@@ -60,9 +61,17 @@ class Graph(SVG):
         self.addStyle('.axis-label', {'font-size': '14px', 'font-family': 'Arial', 'text-anchor': 'middle'})
         self.addStyle('.axis-units', {'font-size':'10px', 'font-family':'Arial'})
         self.addStyle('.y-axis-text', {'text-anchor': 'end'})
+        self.addStyle('.x-axis-text', {'text-anchor': 'middle'})
         self.addStyle('.gridlines', {'stroke':'black', 'stroke-width':0.5, 'fill':'none', 'opacity':0.5})
         self.addStyle('.data-series', {'stroke-width':1, 'fill':'none', 'opacity':1})
 
+    def addData(self, series_dict):
+        """ Add a dictionary of data in the form of series_dict[name] = list_of_data. """
+        
+        for series_name, series_data in series_dict.items():
+            self.series.append(series_name)
+            self.data[series_name] = series_data
+        
     def addDataFromFile(self, filename):
         """ Read in a tab-delimited file with a heading row and add to self.data dictionary """
     
@@ -72,82 +81,96 @@ class Graph(SVG):
             print "Could not open file", filename
             return
         
-        headings = fin.readline().rstrip('\n').split('\t')
-        for h in headings:
+        self.series = fin.readline().rstrip().split('\t')
+        for h in self.series:
             self.data[h] = []
         
         # Should treat first column as x value (unless only one column)
         for line in fin.readlines():
             temp = line.rstrip('\n').split('\t')
-            for i, h in enumerate(headings):
+            for i, h in enumerate(self.series):
                 self.data[h].append(float(temp[i]))
         
-    def output(self):
-        self._getDataDivisions()
-        self._determinePlottingFunctions()
+    def plot(self, *args):
+        """ Given a list of series' names, plots those series with x values equal data indices i.e. 0 to len(data)-1. """
+    
+        if not len(args):
+            y_series = self.series
+        else:
+            y_series = args
+            
+        x_series = range(max(len(self.data[series]) for series in self.series))
+        self._createGraph(x_series, y_series)
+        
+    def plotXonY(self, x_series, *args):
+        """ Given a list plots the first item in the list against all subsequent items in the list
+            If not argument is passed then it plots the series """
+    
+        if not len(args):
+            y_series = self.series
+        else:
+            y_series = args
+        
+        self._createGraph(self.data[x_series], y_series)
+
+    def _createGraph(self, x_series, y_series):
+        x_divisions = self._calculateDivisions(x_series, self.min_x, self.max_x, self.div_x)
+        
+        y_min = min(min(self.data[series]) for series in y_series)
+        y_max = max(max(self.data[series]) for series in y_series)
+        y_divisions = self._calculateDivisions([y_min, y_max], self.min_y, self.max_y, self.div_y)
+        
+        self._determinePlottingFunctions(x_divisions, y_divisions)
         self._addBackground()
         self._addAxes()
-        self._drawAxisUnits()
-        self._drawGridlines()
-        self._plotData()
-        return SVG.output(self)
-
-    def _getDataDivisions(self):
-        if not self.data:
-            return
-
-        x_data = [data[0] for series in self.data.values() for data in series]
-        y_data = [data[1] for series in self.data.values() for data in series]
-    
-        if not self.min_x: self.min_x = min(x_data)
-        if not self.max_x: self.max_x = max(x_data)
-        if not self.max_y: self.max_y = max(y_data)
-        if not self.min_y: self.min_y = min(y_data)
+        self._drawAxisUnits(x_divisions, y_divisions)
+        self._drawGridlines(x_divisions, y_divisions)
         
-        #   Calculate reasonable division for x-axis
-        if not self.div_x:
-            span_x = self.max_x - self.min_x
-            self.div_x = math.pow(10, int(math.log(max([self.max_x, -self.min_x]), 10)))
-            if self.max_x/self.div_x > 5:
-                self.div_x *= 2
-            elif self.max_x/self.div_x < 3:
-                self.div_x *= 0.5
+        for i, series in enumerate(y_series):
+            self._plotData(x_series, self.data[series], i)
+        
+    def _calculateDivisions(self, data, d_min=None, d_max=None, d_div=None):
+        """ Calculate a reasonable way to divide y data for grilines and units """
+        
+        if d_min is None:
+            d_min = min(data)
+        if d_max is None:
+            d_max = max(data)
+            
+        if not d_div:
+            d_div = math.pow(10, int(math.log(max([d_max, -d_min]), 10)))
+            if d_max/d_div > 5:
+                d_div *= 2
+            elif d_max/d_div < 3:
+                d_div *= 0.5
+                
+        divisions = [n * d_div for n in range(-int(math.ceil(-d_min / d_div)), int(math.ceil(d_max / d_div))+1)]
+        
+        return divisions
 
-        self.x_divisions = [x*self.div_x for x in range(-int(math.ceil(-self.min_x / self.div_x)), int(math.ceil(self.max_x / self.div_x))+1)]
-        self.min_x = self.x_divisions[0]
-
-        #   Calculate reasonable division for y-axis        
-        if not self.div_y:
-            span_y = self.max_y - self.min_y
-            self.div_y = math.pow(10, int(math.log(max([self.max_y, -self.min_y]), 10)))
-            if span_y/self.div_y > 4:
-                self.div_y *= 2
-            elif span_y/self.div_y < 3:
-                self.div_y *= 0.5
-
-        self.y_divisions = [y*self.div_y for y in range(-int(math.ceil(-self.min_y / self.div_y)), int(math.ceil(self.max_y / self.div_y))+1)]
-        self.min_y = self.y_divisions[0]
-
-    def _determinePlottingFunctions(self):
+    def _determinePlottingFunctions(self, x_divisions, y_divisions):
+        """ Find where origin of graph should start and determine mapping from data to that region """
+        
+        # Make space for label if required
         if self.x_axis_label:
             self.origin_y += 20
         if self.y_axis_label:
             self.origin_x += 20
         
-        # Should calculate based on unit length
+        # Make space for units if required
         if self.x_axis_units:
-            self.origin_y += 16
+            self.origin_y += 12
         if self.y_axis_units:
-            self.origin_x += 16
+            self.origin_x += 5*max(len("%d" % y) for y in y_divisions)
             
         self.chart_width  = self.attributes['width'] - self.right_pad - self.origin_x
         self.chart_height = self.attributes['height'] - self.upper_pad - self.origin_y
-        x_scaling_factor = self.chart_width  * 1.0 / (self.max_x - self.min_x)
-        y_scaling_factor = self.chart_height * 1.0 / (self.y_divisions[-1] - self.y_divisions[0])
+        x_scaling_factor = self.chart_width  * 1.0 / (x_divisions[-1] - x_divisions[0])
+        y_scaling_factor = self.chart_height * 1.0 / (y_divisions[-1] - y_divisions[0])
         
         # Functions for converting x and y values into coordinates on the SVG
-        self.f_x = lambda x: self.origin_x + x_scaling_factor * (x - self.x_divisions[0])
-        self.f_y = lambda y: self.attributes['height'] - self.origin_y - y_scaling_factor * (y - self.y_divisions[0])
+        self.f_x = lambda x: self.origin_x + x_scaling_factor * (x - x_divisions[0])
+        self.f_y = lambda y: self.attributes['height'] - self.origin_y - y_scaling_factor * (y - y_divisions[0])
 
     def _addBackground(self):
         if self.children[0].children['.background'].get('fill', 'none') != 'none':
@@ -162,8 +185,10 @@ class Graph(SVG):
             x = 0.5*(self.origin_x + self.attributes['width'] - self.right_pad)
             y = self.attributes['height'] - self.lower_pad
             self.addChildElement('text',
-                                {'class':'axis-label', 'x': x, 'y': y},
-                                self.x_axis_label)
+                                {'class':'axis-label',
+                                 'x': x,
+                                 'y': y},
+                                 self.x_axis_label)
 
         if self.y_axis_label:
             x = self.left_pad
@@ -190,12 +215,38 @@ class Graph(SVG):
                                 'x2': self.origin_x,
                                 'y2': self.upper_pad})
 
-    def _drawGridlines(self):
+    def _drawAxisUnits(self, x_divisions, y_divisions):
+        if self.x_axis_units or self.y_axis_units:
+            axis_group = self.addChildElement('g', {'class': 'axis-units'})
+    
+        if self.x_axis_units:
+            x_group = axis_group.addChildElement('g', {'class': 'x-axis-text'})
+        
+            if abs(x_divisions[1] - x_divisions[0]) < 1:
+                x_to_string = lambda x: '%.1f' % x
+            else:
+                x_to_string = lambda x: '%d' % x
+
+            for x in x_divisions:
+                x_group.addChildElement('text', {'x': self.f_x(x), 'y': self.attributes['height'] - self.origin_y+12}, x_to_string(x))
+        
+        if self.y_axis_units:
+            y_group = axis_group.addChildElement('g', {'class': 'y-axis-text'})
+            
+            if abs(y_divisions[1] - y_divisions[0]) < 1:
+                y_to_string = lambda y: '%.1f' % y
+            else:
+                y_to_string = lambda y: '%d' % y
+            
+            for y in y_divisions:
+                y_group.addChildElement('text', {'x': self.origin_x-3, 'y': self.f_y(y)+3}, y_to_string(y))
+
+    def _drawGridlines(self, x_divisions, y_divisions):
         if self.x_gridlines or self.y_gridlines:
             gridline_group = self.addChildElement('g', {'class': 'gridlines'})
 
         if self.x_gridlines:
-            for x in self.x_divisions[1:-1]:
+            for x in x_divisions[1:-1]:
                 gridline_x = int(self.f_x(x)) + 0.5
                 gridline_group.addChildElement('line',
                                                {'x1': gridline_x,
@@ -204,7 +255,7 @@ class Graph(SVG):
                                                 'y2': self.attributes['height'] - self.origin_y - self.chart_height})
 
         if self.y_gridlines:
-            for y in self.y_divisions[1:-1]:
+            for y in y_divisions[1:-1]:
                 gridline_y = int(self.f_y(y)) + 0.5
                 gridline_group.addChildElement('line',
                                                {'x1': self.origin_x,
@@ -212,47 +263,22 @@ class Graph(SVG):
                                                 'x2': self.origin_x + self.chart_width,
                                                 'y2': gridline_y})
 
-    def _drawAxisUnits(self):
-        label_group = self.addChildElement('g', {'class': 'axis-units y-axis-text'})
-        
-        if abs(self.y_divisions[1]) < 1:
-            y_to_string = lambda y: '%.1f' % y
-        else:
-            y_to_string = lambda y: '%d' % y
-        
-        for y in self.y_divisions:
-            label_group.addChildElement('text', {'x': self.origin_x-3, 'y': self.f_y(y)+3}, y_to_string(y))
-        return
-
-        #   x-axis labels
-        if abs(self.div_x) < 1:
-            x_to_string = lambda x: '%.1f' % x
-        else:
-            x_to_string = lambda x: '%d' % x
-
-        x = self.min_x
-        while x < self.max_x:
-            x_string = x_to_string(x)
-            path += '    <text x="%.1f" y="%.1f">' % (self.f_x(x) - 4*len(x_string), self.origin_y + 12)
-            path += x_string
-            path += '</text>\n' 
-            x += self.div_x
-        path += '  </g>\n'
-
-        return path
-        
-    def _plotData(self):
+    def _plotData(self, x_data, y_data, series_n):
         """ Create <path> of straight lines for each series of data """
-        
-        for series, (name, data) in enumerate(self.data.items()):
-            path = 'M%.1f %1f' % (self.f_x(data[0][0]), self.f_y(data[0][1]))
-            for x, y in data[1:]:
-                path += ' L%.1f %1f' % (self.f_x(x), self.f_y(y))
-                
-            self.addChildElement('path',
-                                {'class': 'data-series',
-                                 'stroke': self.colours[series],
-                                 'd': path})
+       
+        # Filter data to prevent plotting lines < 1 px long
+        data_bins = int(len(x_data)/self.chart_width)
+        if data_bins > 1:
+            y_data = [float(sum(y_data[n*data_bins:(n+1)*data_bins]))/data_bins for n in range(len(y_data)/data_bins)]
+            x_data = [float(sum(x_data[n*data_bins:(n+1)*data_bins]))/data_bins for n in range(len(x_data)/data_bins)]
+
+        # Filter to prevent drawing lines that exceed boundaries
+            
+        path = 'M%.1f %1f' % (self.f_x(x_data[0]), self.f_y(y_data[0]))
+        for x, y in zip(x_data[1:], y_data[1:]):
+            path += ' L%.1f %.1f' % (self.f_x(x), self.f_y(y))
+            
+        self.addChildElement('path', {'class': 'data-series', 'stroke': self.colours[series_n], 'd': path})
 
 class BarGraph(Graph):
     """ Plots a horizontal bar chart. """
@@ -264,7 +290,7 @@ class BarGraph(Graph):
         self.x_axis_units = False
         self.gap_width = 2
 
-        self.addStyle('.bar', {'fill': '#888', 'opacity': 0.7})
+        self.addStyle('.bar', {'fill': '#aaa', 'opacity': 0.7})
         self.addStyle('.bar:hover', {'opacity': 1})
 
     def addDataFromFile(self, filename):
@@ -279,6 +305,7 @@ class BarGraph(Graph):
         for line in fin.readlines():
             (key, value) = line.rstrip().split('\t')
             self.data[key] = float(value)
+            self.data_order.append(key)
 
     def output(self):
         self._getDataDivisions()
@@ -295,11 +322,11 @@ class BarGraph(Graph):
             return
 
         if not self.max_x: self.max_x = len(self.data)
-        if not self.min_x: self.min_x = 0
+        if self.min_x != 'None': self.min_x = 0
 
         y_data = self.data.values()
         if not self.max_y: self.max_y = max(y_data)
-        if not self.min_y: self.min_y = min(y_data)
+        if self.min_y == 'None': self.min_y = min(y_data)
 
         #   Calculate reasonable division for y-axis        
         if not self.div_y:
@@ -311,26 +338,33 @@ class BarGraph(Graph):
                 self.div_y *= 0.5
 
         self.y_divisions = [y*self.div_y for y in range(-int(math.ceil(-self.min_y / self.div_y)), int(math.ceil(self.max_y / self.div_y))+1)]
+        print self.y_divisions
 
     def _plotData(self):
         bar_width = (self.chart_width - self.gap_width) * 1.0 / len(self.data)
-        bar_group = self.addChildElement('g', {'transform': 'translate(%d %d) scale(1, -1)' % (self.origin_x, self.attributes['height'] - self.origin_y)})
+        bar_group = self.addChildElement('g', {'transform': 'translate(%d %d) scale(1, -%.3f)' % (self.origin_x, self.attributes['height'] - self.origin_y, self.chart_height * 1.0 / (self.y_divisions[-1] - self.y_divisions[0]))})
         
-        for n, value in enumerate(self.data.values()):
+        for n, bar in enumerate(self.data_order):
             bar_group.addChildElement('rect',
                                      {'class': 'bar',
-                                      'x': self.gap_width + n*bar_width,
+                                      'x': n*bar_width + self.gap_width,
                                       'y': 0,
-                                      'width': bar_width-self.gap_width,
-                                      'height': value})
+                                      'width': bar_width - self.gap_width,
+                                      'height': self.data[bar]})
 
 
 if __name__ == '__main__':
     g = BarGraph({'width':500, 'height':300})
 
-    g.addStyle('.background', {'fill': '#eee'})
+    g.addStyle('.background', {'fill': '#000'})
+    g.addStyle('.gridlines', {'stroke': 'white'})
+    g.addStyle('.axis', {'stroke': 'white'})
+    g.addStyle('.axis-label', {'fill': 'white'})
+    g.addStyle('.axis-units', {'fill': 'white'})
+
     g.x_axis_label = "Subjects"
     g.y_axis_label = "Sentence / Video"
 
-    g.addDataFromFile('sentence_counts.txt')
+    g.addDataFromFile('counts_sentences.txt')
+    g.data_order = sorted(g.data, key=lambda x: g.data[x])
     g.outputToFile("test")
