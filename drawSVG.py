@@ -92,7 +92,7 @@ class SVG(SVG_Element):
     
     def output(self):
         svg_string  = '<?xml version="1.0"  encoding="UTF-8" standalone="no"?>\n'
-        svg_string += '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n'
+        svg_string += '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'
         
         svg_string +=  SVG_Element.output(self)
             
@@ -106,7 +106,7 @@ class SVG_Style_Element(SVG_Element):
         if not self.children:
             return ''
         
-        style_string = '<style>\n'
+        style_string = '\n<style>\n'
       
         for element, style in self.children.items():
             style_string += '  %s{\n' % element
