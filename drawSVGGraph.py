@@ -223,8 +223,10 @@ class Graph(SVG):
         if self.x_axis_units:
             x_group = axis_group.addChildElement('g', {'class': 'x-axis-text'})
         
-            if abs(x_divisions[1] - x_divisions[0]) < 1:
-                x_to_string = lambda x: '%.1f' % x
+            magnitude = math.floor(abs(x_divisions[1] - x_divisions[0]))
+            if magnitude < 0:
+                s = '%%.%df' % (-magnitude)
+                x_to_string = lambda x: s % x
             else:
                 x_to_string = lambda x: '%d' % x
 
@@ -234,8 +236,10 @@ class Graph(SVG):
         if self.y_axis_units:
             y_group = axis_group.addChildElement('g', {'class': 'y-axis-text'})
             
-            if abs(y_divisions[1] - y_divisions[0]) < 1:
-                y_to_string = lambda y: '%.1f' % y
+            magnitude = math.floor(math.log(abs(y_divisions[1] - y_divisions[0]), 10))
+            if magnitude < 0:
+                s = '%%.%df' % (-magnitude)
+                y_to_string = lambda y: s % y
             else:
                 y_to_string = lambda y: '%d' % y
             
