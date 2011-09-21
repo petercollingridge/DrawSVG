@@ -108,7 +108,7 @@ class Graph(SVG):
             If not argument is passed then it plots the series """
     
         if not len(args):
-            y_series = self.series
+            y_series = [series for series in self.series if series != x_series]
         else:
             y_series = args
         
