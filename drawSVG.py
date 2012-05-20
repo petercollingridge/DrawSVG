@@ -33,7 +33,8 @@ class SVG_Element:
         return child
     
     def output(self, nesting=0):
-        svg_string = '\n' + ' '*nesting*self.indent + '<%s' % (self.type)
+        indent = ' ' * nesting * self.indent
+        svg_string = '\n' + indent + '<%s' % (self.type)
         
         for key, value in self.attributes.items():
             svg_string += ' %s="%s"' % (key, value)
@@ -52,7 +53,7 @@ class SVG_Element:
                     svg_string += child
             
             if new_line:
-                svg_string += '\n' + ' '*nesting*self.indent + '</%s>' % (self.type)
+                svg_string += '\n' + indent + '</%s>' % (self.type)
             else:
                 svg_string += '</%s>' % (self.type)
             
@@ -65,6 +66,7 @@ class SVG(SVG_Element):
     def __init__(self, attributes=None):
         SVG_Element.__init__(self, 'svg', attributes)
         self.attributes['version'] = 1.1
+        self.attributes['baseProfile'] = 'full'
         self.attributes['xmlns'] = 'http://www.w3.org/2000/svg'
         self.attributes['xmlns:xlink'] = 'http://www.w3.org/1999/xlink'
         
@@ -90,13 +92,8 @@ class SVG(SVG_Element):
 
         f.write(self.output())
     
-    def output(self):
-        svg_string  = '<?xml version="1.0"  encoding="UTF-8" standalone="no"?>\n'
-        svg_string += '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'
-        
-        svg_string +=  SVG_Element.output(self)
-            
-        return svg_string
+    def output(self):        
+        return SVG_Element.output(self)
     
 class SVG_Style_Element(SVG_Element):
     def __init__(self):
