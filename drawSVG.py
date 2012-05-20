@@ -94,6 +94,14 @@ class SVG(SVG_Element):
     
     def output(self):        
         return SVG_Element.output(self)
+
+    def write(self, filename=None):
+        """ Write output to file if given a filename, otherwise return output as a string. """
+
+        if not filename:
+            return self.output()
+        else:
+            outputToFile(self, filename)
     
 class SVG_Style_Element(SVG_Element):
     def __init__(self):
