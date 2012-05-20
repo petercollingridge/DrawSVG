@@ -101,7 +101,7 @@ class SVG(SVG_Element):
         if not filename:
             return self.output()
         else:
-            outputToFile(self, filename)
+            self.outputToFile(filename)
     
 class SVG_Style_Element(SVG_Element):
     def __init__(self):
