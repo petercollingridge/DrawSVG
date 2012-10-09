@@ -115,23 +115,23 @@ class Graph(SVG):
         self._createGraph(self.data[x_series], y_series)
 
     def _createGraph(self, x_series, y_series):
-        x_divisions = self._calculateDivisions(x_series, self.min_x, self.max_x, self.div_x)
+        x_divisions, x_to_string = self._calculateDivisions(x_series, self.min_x, self.max_x, self.div_x)
         
         y_min = min(min(self.data[series]) for series in y_series)
         y_max = max(max(self.data[series]) for series in y_series)
-        y_divisions = self._calculateDivisions([y_min, y_max], self.min_y, self.max_y, self.div_y)
+        y_divisions, y_to_string = self._calculateDivisions([y_min, y_max], self.min_y, self.max_y, self.div_y)
         
-        self._determinePlottingFunctions(x_divisions, y_divisions)
+        self._determinePlottingFunctions(x_divisions, y_divisions, y_to_string)
         self._addBackground()
         self._addAxes()
-        self._drawAxisUnits(x_divisions, y_divisions)
+        self._drawAxisUnits(x_divisions, y_divisions, x_to_string, y_to_string)
         self._drawGridlines(x_divisions, y_divisions)
         
         for i, series in enumerate(y_series):
             self._plotData(x_series, self.data[series], i)
-        
+
     def _calculateDivisions(self, data, d_min=None, d_max=None, d_div=None):
-        """ Calculate a reasonable way to divide y data for grilines and units """
+        """ Calculate a reasonable way to divide data for gridlines and units """
         
         if d_min is None:
             d_min = min(data)
@@ -142,14 +142,22 @@ class Graph(SVG):
             d_div = math.pow(10, int(math.log(max([d_max, -d_min]), 10)))
             if d_max/d_div > 5:
                 d_div *= 2
+            elif d_max/d_div < 1:
+                d_div *= 0.2
             elif d_max/d_div < 3:
                 d_div *= 0.5
                 
+        magnitude = math.floor(math.log(d_div, 10))
+        if magnitude < 0:
+            to_string = '%%.%df' % (-magnitude)
+        else:
+            to_string = '%d'
+        
         divisions = [n * d_div for n in range(-int(math.ceil(-d_min / d_div)), int(math.ceil(d_max / d_div))+1)]
         
-        return divisions
+        return divisions, to_string
 
-    def _determinePlottingFunctions(self, x_divisions, y_divisions):
+    def _determinePlottingFunctions(self, x_divisions, y_divisions, y_to_string):
         """ Find where origin of graph should start and determine mapping from data to that region """
         
         # Make space for label if required
@@ -162,7 +170,7 @@ class Graph(SVG):
         if self.x_axis_units:
             self.origin_y += 12
         if self.y_axis_units:
-            self.origin_x += 5*max(len("%d" % y) for y in y_divisions)
+            self.origin_x += 5 * max(len(y_to_string % y) for y in y_divisions)
             
         self.chart_width  = self.attributes['width'] - self.right_pad - self.origin_x
         self.chart_height = self.attributes['height'] - self.upper_pad - self.origin_y
@@ -216,35 +224,21 @@ class Graph(SVG):
                                 'x2': self.origin_x,
                                 'y2': self.upper_pad})
 
-    def _drawAxisUnits(self, x_divisions, y_divisions):
+    def _drawAxisUnits(self, x_divisions, y_divisions, x_to_string, y_to_string):
         if self.x_axis_units or self.y_axis_units:
             axis_group = self.addChildElement('g', {'class': 'axis-units'})
     
         if self.x_axis_units:
             x_group = axis_group.addChildElement('g', {'class': 'x-axis-text'})
-        
-            magnitude = math.floor(abs(x_divisions[1] - x_divisions[0]))
-            if magnitude < 0:
-                s = '%%.%df' % (-magnitude)
-                x_to_string = lambda x: s % x
-            else:
-                x_to_string = lambda x: '%d' % x
 
             for x in x_divisions:
-                x_group.addChildElement('text', {'x': self.f_x(x), 'y': self.attributes['height'] - self.origin_y+12}, x_to_string(x))
+                x_group.addChildElement('text', {'x': self.f_x(x), 'y': self.attributes['height'] - self.origin_y+12}, x_to_string % x)
         
         if self.y_axis_units:
             y_group = axis_group.addChildElement('g', {'class': 'y-axis-text'})
             
-            magnitude = math.floor(math.log(abs(y_divisions[1] - y_divisions[0]), 10))
-            if magnitude < 0:
-                s = '%%.%df' % (-magnitude)
-                y_to_string = lambda y: s % y
-            else:
-                y_to_string = lambda y: '%d' % y
-            
             for y in y_divisions:
-                y_group.addChildElement('text', {'x': self.origin_x-3, 'y': self.f_y(y)+3}, y_to_string(y))
+                y_group.addChildElement('text', {'x': self.origin_x-3, 'y': self.f_y(y)+3}, y_to_string % y)
 
     def _drawGridlines(self, x_divisions, y_divisions):
         if self.x_gridlines or self.y_gridlines:
