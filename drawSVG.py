@@ -34,9 +34,10 @@ class SVG_Element:
     
     def output(self, nesting=0):
         indent = ' ' * nesting * self.indent
-        svg_string = '\n' + indent + '<%s' % (self.type)
+
+        svg_string = indent + '<%s' % (self.type)
         
-        for key, value in self.attributes.items():
+        for key, value in self.attributes.iteritems():
             svg_string += ' %s="%s"' % (key, value)
         
         if not self.children:
@@ -47,7 +48,7 @@ class SVG_Element:
             new_line = False
             for child in self.children:
                 if isinstance(child, SVG_Element):
-                    svg_string += child.output(nesting+1)
+                    svg_string += '\n' + child.output(nesting + 1)
                     new_line = True
                 else:
                     svg_string += child
@@ -120,6 +121,6 @@ class SVG_Style_Element(SVG_Element):
                 style_string += '    %s:\t%s;\n' % (key, value)
             style_string += '  }\n'
         
-        style_string += '  </style>\n\n'
+        style_string += '  </style>\n'
         
         return style_string

@@ -272,11 +272,8 @@ class Graph(SVG):
             x_data = [float(sum(x_data[n*data_bins:(n+1)*data_bins]))/data_bins for n in range(len(x_data)/data_bins)]
 
         # Filter to prevent drawing lines that exceed boundaries
-            
-        path = 'M%.1f %1f' % (self.f_x(x_data[0]), self.f_y(y_data[0]))
-        for x, y in zip(x_data[1:], y_data[1:]):
-            path += ' L%.1f %.1f' % (self.f_x(x), self.f_y(y))
-            
+        
+        path = 'M' + ' '.join('%.1f,%.1f' % (self.f_x(x), self.f_y(y)) for x, y in zip(x_data, y_data))
         self.addChildElement('path', {'class': 'data-series', 'stroke': self.colours[series_n], 'd': path})
 
 class BarGraph(Graph):
