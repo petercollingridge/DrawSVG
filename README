@@ -1,4 +1,5 @@
-This Python module allows you to easily create SVG files.
+Python module to create SVG files.
+Add to /usr/lib/python2.7/ for easy use.
 
 Draw a basic rectangle:
 
@@ -6,6 +7,7 @@ Draw a basic rectangle:
  mySVG = SVG()
  
  mySVG.addChildElement('rect', {'x':20, 'y':20, 'width':60, 'height':20})
- 
- mySVG.outputToFile('test.svg')
+ mySVG.write('test.svg')
 
+For more information, see the wiki:
+https://github.com/petercollingridge/DrawSVG/wiki
