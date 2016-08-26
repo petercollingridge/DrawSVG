@@ -113,9 +113,6 @@ class SVG(SVG_Element):
 
         f.write(self.output())
 
-    def output(self):
-        return SVG_Element.output(self)
-
     def write(self, filename=None):
         """ Write output to file if given a filename, otherwise return output as a string. """
 

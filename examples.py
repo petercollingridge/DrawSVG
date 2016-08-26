@@ -75,3 +75,4 @@ def example2():
 #my_svg = addRectElementInStages()
 my_svg = addRectElement()
 my_svg.outputToFile('test.svg')
+print my_svg.output()
