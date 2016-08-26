@@ -1,21 +1,25 @@
 import drawSVG
 
+
 def simplestExample():
     """ Create a valid svg document containing an empty svg element"""
 
     my_svg = drawSVG.SVG()
     return my_svg
 
+
 def addRectElement():
     """ Create an svg document containing a rectangle """
 
     my_svg = drawSVG.SVG()
     #   Add the element: <rect x="20" y="25" width="20" height="25"/>
-    my_svg.addChildElement('rect', {'x':20, 'y':40, 'width':80, 'height':50})
+    my_svg.addChildElement('rect', {'x': 20, 'y': 40, 'width': 80, 'height': 50})
+    my_svg.rect(20, 100, 80, 50, fill='#f00')
+
     return my_svg
 
-def addRectElementInStages():
 
+def addRectElementInStages():
     my_svg = drawSVG.SVG()
     rect = my_svg.addChildElement('rect')
     rect.attributes['x'] = 20
@@ -43,9 +47,10 @@ def addCSSStyling():
     my_svg.addChildElement('rect', {'x':20, 'y':40, 'width':80, 'height':50})
     my_svg.addChildElement('circle', {'cx':120, 'cy':40, 'r':25})
     return my_svg
-    
+
+
 def example2():
-    my_svg = drawSVG.SVG({'width':600})
+    my_svg = drawSVG.SVG({'width': 600})
     my_svg.attributes['height'] = 400
 
     # Adding child elements all at once
@@ -68,5 +73,5 @@ def example2():
     my_svg.addStyle('rect', ('fill', 'green'), ('stroke-width', 2), ('stroke', 'black'))
 
 #my_svg = addRectElementInStages()
-my_svg = addCSSStyling()
+my_svg = addRectElement()
 my_svg.outputToFile('test.svg')
