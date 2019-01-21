@@ -25,19 +25,21 @@ class SVG_Element:
         else:
             self.children = []
 
-    def addChildElement(self, type, attributes=None, child=None):
+    def addChildElement(self, tag, attributes=None, child=None):
         """
-            Create an element with given type and atrributes,
+            Create an element with given tag type and atrributes,
             and append to self.children.
             Returns the child element.
         """
 
-        child = SVG_Element(type, attributes, child)
+        child = SVG_Element(tag, attributes, child)
         self.children.append(child)
         return child
 
-    def add(self, type, attributes=None, child=None):
-        return self.addChildElement(type, attributes, child)
+    def add(self, tag, attributes=None, child=None):
+        child = SVG_Element(tag, attributes, child)
+        self.children.append(child)
+        return child
 
     def output(self, nesting=0):
         indent = ' ' * nesting * self.indent
