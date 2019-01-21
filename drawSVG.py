@@ -70,10 +70,7 @@ class SVG(SVG_Element):
 
     def __init__(self, attributes=None):
         SVG_Element.__init__(self, 'svg', attributes)
-        self.attributes['version'] = 1.1
-        self.attributes['baseProfile'] = 'full'
         self.attributes['xmlns'] = 'http://www.w3.org/2000/svg'
-        self.attributes['xmlns:xlink'] = 'http://www.w3.org/1999/xlink'
 
         style_element = SVG_Style_Element()
         self.styleDict = style_element.children
