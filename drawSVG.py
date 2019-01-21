@@ -36,6 +36,9 @@ class SVG_Element:
         self.children.append(child)
         return child
 
+    def add(self, type, attributes=None, child=None):
+        return self.addChildElement(type, attributes, child)
+
     def output(self, nesting=0):
         indent = ' ' * nesting * self.indent
 
