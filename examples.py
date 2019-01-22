@@ -14,38 +14,44 @@ def addRectElement():
     my_svg = drawSVG.SVG()
     #   Add the element: <rect x="20" y="25" width="20" height="25"/>
     my_svg.addChildElement('rect', {'x': 20, 'y': 40, 'width': 80, 'height': 50})
-    my_svg.rect(20, 100, 80, 50, fill='#f00')
+    my_svg.rect(x=20, y=100, width=80, height=50, fill='#0f0')
+    my_svg.rect(20, 160, fill='#0f0', width=80, height=50)
+    my_svg.rect(20, 220, 80, 50, fill='#f00')
 
     return my_svg
 
 
 def addRectElementInStages():
     my_svg = drawSVG.SVG()
+
     rect = my_svg.addChildElement('rect')
     rect.attributes['x'] = 20
     rect.attributes['y'] = 40
     rect.attributes['width'] = 80
     rect.attributes['height'] = 50
-    
+
     return my_svg
-    
+
+
 def addSVGAttributes():
     """ Create an svg document with width=80, height=50 """
-    
+
     # Can pass attributes during initialisation
-    my_svg = drawSVG.SVG({'width':80})
-    
+    my_svg = drawSVG.SVG({'width': 80})
+
     # Or can (re)define later
     my_svg.attributes['height'] = 50
-    
-    my_svg.addChildElement('rect', {'width':200, 'height':200})
+
+    my_svg.addChildElement('rect', {'width': 200, 'height': 200})
+
     return my_svg
-    
+
+
 def addCSSStyling():
-    my_svg = drawSVG.SVG({'width':200, 'height':100})
+    my_svg = drawSVG.SVG({'width': 200, 'height': 100})
     my_svg.addStyle('rect', {'fill': 'green', 'stroke-width': 2, 'stroke': 'black'})
-    my_svg.addChildElement('rect', {'x':20, 'y':40, 'width':80, 'height':50})
-    my_svg.addChildElement('circle', {'cx':120, 'cy':40, 'r':25})
+    my_svg.addChildElement('rect', {'x': 20, 'y': 40, 'width': 80, 'height': 50})
+    my_svg.addChildElement('circle', {'cx': 120, 'cy': 40, 'r': 25})
     return my_svg
 
 
