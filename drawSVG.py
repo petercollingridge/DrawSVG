@@ -57,7 +57,7 @@ class SVG_Element:
 
         svg_string = indent + '<%s' % (self.type)
 
-        for key, value in self.attributes.iteritems():
+        for key, value in self.attributes.items():
             svg_string += ' %s="%s"' % (key, value)
 
         if not self.children:
@@ -106,12 +106,11 @@ class SVG(SVG_Element):
         """ Prints output to a given filename. Add a .svg extenstion if not given. """
 
         import os
-        if os.path.splitext(filename)[1] == '.svg':
-            f = file(filename, 'w')
-        else:
-            f = file("%s.svg" % filename, 'w')
+        if not os.path.splitext(filename)[1] == '.svg':
+            filename += '.svg'
 
-        f.write(self.output())
+        with open(filename, 'w') as f:
+            f.write(self.output())
 
     def write(self, filename=None):
         """ Write output to file if given a filename, otherwise return output as a string. """
