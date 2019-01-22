@@ -35,29 +35,42 @@ def create_bar_chart(data, width=300, height=200):
     graph_width = x2 - x1
     graph_height = y2 - y1
 
+    # Add styles
     svg.addStyle('.axis', { 'fill': 'none', 'stroke': 'black' })
-    svg.addStyle('.gridlines', { 'fill': 'none', 'stroke': '#aaa' })
+    svg.addStyle('.gridlines', { 'fill': 'none', 'stroke': '#ccc' })
     svg.addStyle('.tick-labels', { 'font-size': '0.8rem' })
     svg.addStyle('.tick-labels-y', { 'text-anchor': 'end', 'dominant-baseline': 'middle' })
+    svg.addStyle('.bars', { 'fill': '#888', 'opacity': '0.6' })
 
-    # Draw gridlines
+    # Create groups for adding elements to
     gridlines = svg.add('g', { 'class': 'gridlines' })
+    bars = svg.add('g', { 'class': 'bars' })
     tick_labels_y = svg.add('g', { 'class': 'tick-labels tick-labels-y' })
 
+    # Draw gridlines and y-axis labels
     max_value = max(data.values())
-    tick_size = getTickSize(0, max_value, 5)
-    num_ticks = int(round(max_value / tick_size))
+    tick_size = getTickSize(0, max_value, 8)
+    num_ticks = int(round(0.5 + max_value / tick_size))
+    y_scale = lambda y: y2 - graph_height * y / (tick_size * num_ticks)
 
-    y_scale = lambda y: y2 - graph_height * y / max_value
-
-    for i in range(0, num_ticks + 1):
+    for i in range(0, num_ticks):
         value = i * tick_size
         y = round(y_scale(value)) - 0.5
 
-        if i > 0 and i != num_ticks:
+        if i > 0:
             gridlines.add('path', { 'd': "M{} {}H{}".format(x1, y, x2) })
 
         tick_labels_y.add('text', { 'x': x1 - 4, 'y': y }, "{0:.0f}".format(value))
+
+    # Add bars
+    gap = 2
+    bar_width = floor((graph_width - 1) / len(data)) - gap
+    bar_x = x1 + 1
+
+    for name, value in sorted(data.items(), key=lambda item: -item[1]):
+        y = round(y_scale(value))
+        bars.add('rect', { 'x': bar_x, 'y': y, 'width': bar_width, 'height': y2 - y })
+        bar_x += bar_width + gap
 
     # Draw axes
     path = 'M{} {} V{} H{}'.format(x1 - 0.5, y1, y2 + 0.5, x2)
