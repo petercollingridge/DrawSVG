@@ -132,10 +132,10 @@ class SVG_Style_Element(SVG_Element):
         style_string = '\n<style>\n'
 
         for element, style in self.children.items():
-            style_string += '  %s{\n' % element
+            style_string += '  %s {\n' % element
 
             for key, value in style.items():
-                style_string += '    %s:\t%s;\n' % (key, value)
+                style_string += '    %s: %s;\n' % (key, value)
             style_string += '  }\n'
 
         style_string += '  </style>\n'
