@@ -23,10 +23,10 @@ def getTickSize(start_value, end_value, max_divisions, min_unit=0):
 def create_bar_chart(data, width=300, height=200):
     svg = drawSVG.SVG({ 'width': width, 'height': height })
 
-    padding_top = 2
+    padding_top = 5
     padding_right = 2
     padding_left = 38
-    padding_base = 18
+    padding_base = 15
 
     x1 = padding_left
     x2 = width - padding_right
@@ -37,9 +37,12 @@ def create_bar_chart(data, width=300, height=200):
 
     svg.addStyle('.axis', { 'fill': 'none', 'stroke': 'black' })
     svg.addStyle('.gridlines', { 'fill': 'none', 'stroke': '#aaa' })
+    svg.addStyle('.tick-labels', { 'font-size': '0.8rem' })
+    svg.addStyle('.tick-labels-y', { 'text-anchor': 'end', 'dominant-baseline': 'middle' })
 
     # Draw gridlines
     gridlines = svg.add('g', { 'class': 'gridlines' })
+    tick_labels_y = svg.add('g', { 'class': 'tick-labels tick-labels-y' })
 
     max_value = max(data.values())
     tick_size = getTickSize(0, max_value, 5)
@@ -47,9 +50,14 @@ def create_bar_chart(data, width=300, height=200):
 
     y_scale = lambda y: y2 - graph_height * y / max_value
 
-    for i in range(1, num_ticks):
-        y = round(y_scale(i * tick_size)) - 0.5
-        gridlines.add('path', { 'd': "M{} {}H{}".format(x1, y, x2) })
+    for i in range(0, num_ticks + 1):
+        value = i * tick_size
+        y = round(y_scale(value)) - 0.5
+
+        if i > 0 and i != num_ticks:
+            gridlines.add('path', { 'd': "M{} {}H{}".format(x1, y, x2) })
+
+        tick_labels_y.add('text', { 'x': x1 - 4, 'y': y }, "{0:.0f}".format(value))
 
     # Draw axes
     path = 'M{} {} V{} H{}'.format(x1 - 0.5, y1, y2 + 0.5, x2)
@@ -73,5 +81,6 @@ if __name__ == '__main__':
         'is': 3878929,
     }
 
-    svg = create_bar_chart(data)
+    percent_data = { key: value * 100.0 / 372853319 for key, value in data.items() }
+    svg = create_bar_chart(percent_data)
     svg.write('test.svg')
