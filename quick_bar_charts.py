@@ -38,14 +38,16 @@ def create_bar_chart(data, width=300, height=200):
     # Add styles
     svg.addStyle('.axis', { 'fill': 'none', 'stroke': 'black' })
     svg.addStyle('.gridlines', { 'fill': 'none', 'stroke': '#ccc' })
-    svg.addStyle('.tick-labels', { 'font-size': '0.8rem' })
+    svg.addStyle('.tick-labels', { 'font-size': '0.9rem' })
     svg.addStyle('.tick-labels-y', { 'text-anchor': 'end', 'dominant-baseline': 'middle' })
+    svg.addStyle('.tick-labels-x', { 'text-anchor': 'middle', 'dominant-baseline': 'hanging' })
     svg.addStyle('.bars', { 'fill': '#888', 'opacity': '0.6' })
 
     # Create groups for adding elements to
     gridlines = svg.add('g', { 'class': 'gridlines' })
     bars = svg.add('g', { 'class': 'bars' })
     tick_labels_y = svg.add('g', { 'class': 'tick-labels tick-labels-y' })
+    bar_labels = svg.add('g', { 'class': 'tick-labels tick-labels-x' })
 
     # Draw gridlines and y-axis labels
     max_value = max(data.values())
@@ -64,16 +66,18 @@ def create_bar_chart(data, width=300, height=200):
 
     # Add bars
     gap = 2
-    bar_width = floor((graph_width - 1) / len(data)) - gap
-    bar_x = x1 + 1
+    bar_width = floor((graph_width - 4) / len(data))
+    bar_x = x1 + (graph_width - bar_width * len(data)) / 2
+    bar_width -= gap
 
     for name, value in sorted(data.items(), key=lambda item: -item[1]):
         y = round(y_scale(value))
         bars.add('rect', { 'x': bar_x, 'y': y, 'width': bar_width, 'height': y2 - y })
+        bar_labels.add('text', { 'x': bar_x + bar_width / 2, 'y': y2 + 6}, name)
         bar_x += bar_width + gap
 
     # Draw axes
-    path = 'M{} {} V{} H{}'.format(x1 - 0.5, y1, y2 + 0.5, x2)
+    path = 'M{} {} H{}'.format(x1 - 0.5, y2 + 0.5, x2)
 
     svg.add('path', { 'd': path, 'class': 'axis' })
 
