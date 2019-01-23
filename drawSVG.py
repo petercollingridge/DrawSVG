@@ -21,7 +21,7 @@ class SVG_Element:
             self.attributes = {}
 
         if child:
-            self.children = [child]
+            self.children = [str(child)]
         else:
             self.children = []
 
