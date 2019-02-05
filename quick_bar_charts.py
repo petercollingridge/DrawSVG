@@ -113,8 +113,22 @@ if __name__ == '__main__':
 
     data = {3: 78568162, 2: 64014624, 1: 13726939, 4: 67147137, 5: 42197602, 6: 30494576, 7: 27318266, 9: 12919188, 8: 19025650, 10: 8444737, 11: 4575234, 13: 1340132, 14: 499104, 12: 2404650, 15: 130590, 16: 33624, 17: 11537, 18: 1425, 19: 121, 20: 16, 21: 5}
     data = { key: value * 100.0 / 372853319 for key, value in data.items() }
+
+    data = {
+        'qu': 99.99896,
+        've': 68.50052,
+        'ze': 53.1492,
+        'he': 47.30234,
+        'ju': 43.10336,
+        'ke': 32.09455,
+        'jo': 31.17668,
+        'th': 30.90403,
+        'be': 29.74160,
+        'in': 27.47027,
+    }
+
     # Sort by key
-    sorted_data = [item for item in sorted(data.items(), key=lambda item: item[0])]
+    sorted_data = [item for item in sorted(data.items(), key=lambda item: -item[1])]
 
     svg = create_bar_chart(sorted_data)
     svg.write('test.svg')
