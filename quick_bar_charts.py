@@ -192,6 +192,7 @@ if __name__ == '__main__':
     # Sort by key
     sorted_data = [item for item in sorted(data.items(), key=lambda item: -item[1])]
     # Sort by key
+    # Sort by key
     # sorted_data = [item for item in sorted(data.items(), key=lambda item: item[0])]
 
     svg = create_bar_chart(
