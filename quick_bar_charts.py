@@ -1,26 +1,9 @@
-from math import floor, pow, log10
+from math import pow
 
 import drawSVG
-from results_to_graph import results
+from examples.results_to_graph import results
+from utils import get_max_divisions, get_tick_size
 
-
-def get_max_divisions(position_1, position_2):
-    return max(2, floor(abs(position_2 - position_1) / 25))
-
-
-def getTickSize(start_value, end_value, max_divisions, min_unit=0):
-    unit_value = max(min_unit, pow(10, floor(log10(end_value - start_value) - 1)))
-
-    #  Increase unit value only using nice numbers
-    if unit_value < end_value / 20:
-        unit_value *= 2
-    if unit_value < end_value / 16:
-        unit_value *= 1.25
-
-    while unit_value < end_value / max_divisions:
-        unit_value *= 2
-
-    return unit_value
 
 
 def create_bar_chart(data, width=300, height=200, x_axis_label=None, y_axis_label=None):
@@ -58,7 +41,7 @@ def create_bar_chart(data, width=300, height=200, x_axis_label=None, y_axis_labe
 
     # Draw gridlines and y-axis labels
     max_value = max(item[1] for item in data)
-    tick_size = getTickSize(0, max_value, 8)
+    tick_size = get_tick_size(0, max_value, 8)
     num_ticks = int(round(0.5 + max_value / tick_size))
     y_scale = lambda y: y2 - graph_height * y / max_value
 

@@ -80,7 +80,7 @@ class Graph(SVG):
         try:
             fin = open(filename, 'r')
         except IOError:
-            print "Could not open file", filename
+            print("Could not open file",  filename)
             return
         
         self.series = fin.readline().rstrip().split('\t')
@@ -295,7 +295,7 @@ class BarGraph(Graph):
         try:
             fin = open(filename, 'r')
         except IOError:
-            print "Could not open file", filename
+            print("Could not open file", filename)
             return
         
         for line in fin.readlines():
