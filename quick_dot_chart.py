@@ -1,7 +1,6 @@
 from math import pow, floor
 
 import drawSVG
-from examples.results_to_graph import results
 from utils import get_max_divisions, get_tick_size
 
 
@@ -29,17 +28,17 @@ def create_bar_chart(data, width=300, height=200, x_axis_label=None, y_axis_labe
     svg.addStyle('.tick-labels-y', { 'text-anchor': 'end', 'dominant-baseline': 'middle' })
     svg.addStyle('.tick-labels-x', { 'text-anchor': 'middle', 'dominant-baseline': 'hanging' })
     svg.addStyle('.y-axis-label', { 'text-anchor': 'middle', 'dominant-baseline': 'hanging' })
-    svg.addStyle('.bars rect', { 'fill': '#888', 'opacity': '0.6' })
+    svg.addStyle('.dots circle', { 'fill': '#888', 'opacity': '0.6' })
     svg.addStyle('.bars rect:hover', { 'fill': 'rgb(255, 0, 175)', 'opacity': '0.95' })
 
     # Create groups for adding elements to
     gridlines = svg.add('g', { 'class': 'gridlines' })
-    bars = svg.add('g', { 'class': 'bars' })
+    dots = svg.add('g', { 'class': 'dots' })
     tick_labels_y = svg.add('g', { 'class': 'tick-labels tick-labels-y' })
     bar_labels = svg.add('g', { 'class': 'tick-labels tick-labels-x' })
 
     # Draw gridlines and y-axis labels
-    max_value = max(item[1] for item in data)
+    max_value = max(max(item['values']) for item in data)
     tick_size = get_tick_size(0, max_value, 8)
     num_ticks = int(round(0.5 + max_value / tick_size))
     y_scale = lambda y: y2 - graph_height * y / max_value
@@ -50,7 +49,7 @@ def create_bar_chart(data, width=300, height=200, x_axis_label=None, y_axis_labe
 
         if i > 0:
             gridlines.add('path', { 'd': "M{} {}H{}".format(x1, y, x2) })
-        tick_labels_y.add('text', { 'x': x1 - 4, 'y': y }, "{0:.1f}".format(value))
+        tick_labels_y.add('text', { 'x': x1 - 4, 'y': y }, "{0:.0f}".format(value))
 
     # Add y-axis label
     if y_axis_label:
@@ -61,19 +60,20 @@ def create_bar_chart(data, width=300, height=200, x_axis_label=None, y_axis_labe
     if x_axis_label:
         svg.add('text', { 'class': 'tick-labels-x', 'x': (x1 + x2) / 2, 'y': height - 16 }, x_axis_label)
 
-
     # Add bars
     gap = 1
+    r = 5
     bar_width = floor((graph_width - 4) / len(data))
-    bar_x = x1 + (graph_width - bar_width * len(data)) / 2
+    bar_x = x1 + (graph_width - bar_width * len(data)) / 2 + bar_width / 2
     bar_width -= gap
 
-    for i, (name, value) in enumerate(data):
-        y = round(y_scale(value))
-        bars.add('rect', { 'x': bar_x, 'y': y, 'width': bar_width, 'height': y2 - y })
+    for i, item in enumerate(data):
+        for value in item['values']:
+            y = round(y_scale(value))
+            dots.add('circle', { 'cx': bar_x, 'cy': y, 'r': r })
 
-        # if bar_width > 20 or i % 2:
-        bar_labels.add('text', { 'x': bar_x + bar_width / 2, 'y': y2 + 6}, name)
+        if bar_width > 20 or i % 2:
+            bar_labels.add('text', { 'x': bar_x, 'y': y2 + 6}, item['name'])
 
         bar_x += bar_width + gap
 
@@ -85,20 +85,27 @@ def create_bar_chart(data, width=300, height=200, x_axis_label=None, y_axis_labe
 
 
 if __name__ == '__main__':
-    data = results['ratio of starting to ending frequency']
-
-    # Sort by value
-    sorted_data = [item for item in sorted(data.items(), key=lambda item: -item[1])]
-
-    # Sort by key
-    sorted_data = [item for item in sorted(data.items(), key=lambda item: -item[1])]
-
+    data = [
+        {
+            'name': 'bl*nder',
+            'values': [19, 1977, 107, 64, 602],
+            'labels': ['a', 'e', 'i', 'o', 'i']
+        }, {
+            'name': 'b*lling',
+            'values': [95, 22, 1898, 117, 21],
+            'labels': ['a', 'e', 'i', 'o', 'u']
+        }, {
+            'name': 'p*tting',
+            'values': [1062, 528, 536, 437, 31110],
+            'labels': ['a', 'e', 'i', 'o', 'u']
+        },
+    ]
 
     svg = create_bar_chart(
-        sorted_data,
+        data,
         height=225,
         x_axis_label="Letter",
-        y_axis_label="Frequency (%)"
+        y_axis_label="Count"
     )
 
     svg.write('test.svg')
