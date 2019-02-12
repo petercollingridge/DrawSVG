@@ -38,14 +38,20 @@ def create_bar_chart(data, width=300, height=200, x_axis_label=None, y_axis_labe
     bar_labels = svg.add('g', { 'class': 'tick-labels tick-labels-x' })
 
     # Draw gridlines and y-axis labels
+    min_value = min(min(item['values']) for item in data)
     max_value = max(max(item['values']) for item in data)
-    tick_size = get_tick_size(0, max_value, 8)
-    num_ticks = int(round(0.5 + max_value / tick_size))
-    y_scale = lambda y: y2 - graph_height * y / max_value
 
-    for i in range(0, num_ticks):
-        value = i * tick_size
+    # Calculate tick size and number
+    tick_size, min_value, max_value = get_tick_size(min_value, max_value, 8)
+    num_ticks = int(round((max_value * 1.05 - min_value) / tick_size))
+
+    y_scale = lambda y: y2 - graph_height * (y - min_value) / (max_value - min_value)
+
+    for i in range(0, num_ticks + 1):
+        value = min_value + i * tick_size
         y = round(y_scale(value)) - 0.5
+
+        print(value, y)
 
         if i > 0:
             gridlines.add('path', { 'd': "M{} {}H{}".format(x1, y, x2) })
@@ -97,6 +103,22 @@ if __name__ == '__main__':
         }, {
             'name': 'p*tting',
             'values': [1062, 528, 536, 437, 31110],
+            'labels': ['a', 'e', 'i', 'o', 'u']
+        },
+    ]
+
+    data = [
+        {
+            'name': 'bl*nder',
+            'values': [-16.8, -12.1, -15.1, -15.6, -13.3],
+            'labels': ['a', 'e', 'i', 'o', 'i']
+        }, {
+            'name': 'b*lling',
+            'values': [-15.2, -16.6, -12.2, -15.0, -16.7],
+            'labels': ['a', 'e', 'i', 'o', 'u']
+        }, {
+            'name': 'p*tting',
+            'values': [-12.8, -13.5, -13.5, -13.7, -9.4],
             'labels': ['a', 'e', 'i', 'o', 'u']
         },
     ]
