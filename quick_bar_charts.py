@@ -80,7 +80,7 @@ def create_bar_chart(data, width=300, height=200, x_axis_label=None, y_axis_labe
 
         # if bar_width > 20 or i % 2:
         group.add('text', { 'x': bar_x + bar_width / 2, 'y': y2 + 6}, name)
-        group.add('text', { 'class': 'hidden-value', 'x': bar_x + bar_width / 2, 'y': y - 2}, value)
+        group.add('text', { 'class': 'hidden-value', 'x': bar_x + bar_width / 2, 'y': y - 2}, "{0:.2f}".format(value))
 
         bar_x += bar_width + gap
 
@@ -94,6 +94,7 @@ def create_bar_chart(data, width=300, height=200, x_axis_label=None, y_axis_labe
 if __name__ == '__main__':
     data = results['ratio of starting to ending frequency']
     data = results['the x word']
+    data = results['proportions_of_letters_that_can_be_replaced']
 
     # Sort by value
     sorted_data = [item for item in sorted(data.items(), key=lambda item: -item[1])]
@@ -102,18 +103,17 @@ if __name__ == '__main__':
     # sorted_data = [item for item in sorted(data.items(), key=lambda item: item[0])]
 
     # Divide by a million
-    sorted_data = [(item[0], item[1] / 1000000) for item in sorted_data]
+    # sorted_data = [(item[0], item[1] / 1000000) for item in sorted_data]
 
     # The logarithm
     # sorted_data = [(item[0], log10(item[1])) for item in sorted_data]
-
 
     svg = create_bar_chart(
         sorted_data,
         width=800,
         height=250,
-        x_axis_label="The ? Word",
-        y_axis_label="Millions of pages"
+        x_axis_label="Letter",
+        y_axis_label="Proportion of letters that can be swapped"
     )
 
     svg.write('test.svg')
