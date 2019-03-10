@@ -5,14 +5,14 @@ from examples.results_to_graph import results
 from utils import get_max_divisions, get_tick_size
 
 
-def create_bar_chart(data, width=300, height=200, x_axis_label=None, y_axis_label=None):
+def create_bar_chart(data, width=300, height=200, **kwargs):
     svg = drawSVG.SVG({
         'viewBox': "0 0 {} {}".format(width, height)
     })
 
     padding_top = 10
     padding_right = 1
-    padding_left = 50
+    padding_left = 65
     padding_base = 40
 
     x1 = padding_left
@@ -56,14 +56,20 @@ def create_bar_chart(data, width=300, height=200, x_axis_label=None, y_axis_labe
 
         if i > 0:
             gridlines.add('path', { 'd': "M{} {}H{}".format(x1, y, x2) })
-        tick_labels_y.add('text', { 'x': x1 - 4, 'y': y }, "{0:.1f}".format(value))
+
+        if kwargs.get('format_y_ticks'):
+            value = kwargs['format_y_ticks'](value)
+
+        tick_labels_y.add('text', { 'x': x1 - 4, 'y': y }, value)
 
     # Add y-axis label
+    y_axis_label = kwargs.get('y_axis_label')
     if y_axis_label:
         transform = "translate({} {}) rotate(-90)".format(2, (y_scale(num_ticks * tick_size / 2)))
         svg.add('text', { 'class': 'y-axis-label', 'transform': transform }, y_axis_label)
 
     # Add x-axis label
+    x_axis_label = kwargs.get('y_axis_label')
     if x_axis_label:
         svg.add('text', { 'class': 'tick-labels-x', 'x': (x1 + x2) / 2, 'y': height - 16 }, x_axis_label)
 
@@ -80,7 +86,10 @@ def create_bar_chart(data, width=300, height=200, x_axis_label=None, y_axis_labe
 
         # if bar_width > 20 or i % 2:
         group.add('text', { 'x': bar_x + bar_width / 2, 'y': y2 + 6}, name)
-        group.add('text', { 'class': 'hidden-value', 'x': bar_x + bar_width / 2, 'y': y - 2}, "{0:.2f}".format(value))
+
+        if kwargs.get('format_bar_value'):
+            value = kwargs['format_bar_value'](value)
+        group.add('text', { 'class': 'hidden-value', 'x': bar_x + bar_width / 2, 'y': y - 2}, value)
 
         bar_x += bar_width + gap
 
@@ -95,6 +104,7 @@ if __name__ == '__main__':
     data = results['ratio of starting to ending frequency']
     data = results['the x word']
     data = results['proportions_of_letters_that_can_be_replaced']
+    data = results['number of times a letter can be swapped']
 
     # Sort by value
     sorted_data = [item for item in sorted(data.items(), key=lambda item: -item[1])]
@@ -113,7 +123,8 @@ if __name__ == '__main__':
         width=800,
         height=250,
         x_axis_label="Letter",
-        y_axis_label="Proportion of letters that can be swapped"
+        y_axis_label="Number of swaps",
+        format_y_ticks=lambda x: "{:d}".format(x)
     )
 
     svg.write('test.svg')
