@@ -12,7 +12,7 @@ def create_bar_chart(data, width=300, height=200, **kwargs):
 
     padding_top = 10
     padding_right = 1
-    padding_left = 65
+    padding_left = 40
     padding_base = 40
 
     x1 = padding_left
@@ -69,7 +69,7 @@ def create_bar_chart(data, width=300, height=200, **kwargs):
         svg.add('text', { 'class': 'y-axis-label', 'transform': transform }, y_axis_label)
 
     # Add x-axis label
-    x_axis_label = kwargs.get('y_axis_label')
+    x_axis_label = kwargs.get('x_axis_label')
     if x_axis_label:
         svg.add('text', { 'class': 'tick-labels-x', 'x': (x1 + x2) / 2, 'y': height - 16 }, x_axis_label)
 
@@ -105,30 +105,31 @@ if __name__ == '__main__':
     data = results['the x word']
     data = results['number of times a letter can be swapped']
     data = results['proportions_of_letters_that_can_be_replaced']
+    data = results['maximum variants for a given a word length']
 
     # Sort by value
-    sorted_data = [item for item in sorted(data.items(), key=lambda item: -item[1])]
+    # sorted_data = [item for item in sorted(data.items(), key=lambda item: -item[1])]
 
     # Sort by key
-    # sorted_data = [item for item in sorted(data.items(), key=lambda item: item[0])]
+    sorted_data = [item for item in sorted(data.items(), key=lambda item: item[0])]
 
     # Divide by a million
     # sorted_data = [(item[0], item[1] / 1000000) for item in sorted_data]
 
     # Times by a 100
-    sorted_data = [(item[0], item[1] * 100) for item in sorted_data]
+    # sorted_data = [(item[0], item[1] * 100) for item in sorted_data]
 
     # The logarithm
     # sorted_data = [(item[0], log10(item[1])) for item in sorted_data]
 
     svg = create_bar_chart(
         sorted_data,
-        width=800,
-        height=250,
-        x_axis_label="Letter",
-        y_axis_label="Percent swappable",
-        format_y_ticks=lambda x: "{:.0f}%".format(x),
-        format_bar_value=lambda x: "{:.0f}%".format(x)
+        width=300,
+        height=225,
+        x_axis_label="Word length",
+        y_axis_label="Maximum variants",
+        format_y_ticks=lambda x: "{:.0f}".format(x),
+        # format_bar_value=lambda x: "{:.0f}%".format(x)
     )
 
     svg.write('test.svg')
