@@ -103,8 +103,8 @@ def create_bar_chart(data, width=300, height=200, **kwargs):
 if __name__ == '__main__':
     data = results['ratio of starting to ending frequency']
     data = results['the x word']
-    data = results['proportions_of_letters_that_can_be_replaced']
     data = results['number of times a letter can be swapped']
+    data = results['proportions_of_letters_that_can_be_replaced']
 
     # Sort by value
     sorted_data = [item for item in sorted(data.items(), key=lambda item: -item[1])]
@@ -115,6 +115,9 @@ if __name__ == '__main__':
     # Divide by a million
     # sorted_data = [(item[0], item[1] / 1000000) for item in sorted_data]
 
+    # Times by a 100
+    sorted_data = [(item[0], item[1] * 100) for item in sorted_data]
+
     # The logarithm
     # sorted_data = [(item[0], log10(item[1])) for item in sorted_data]
 
@@ -123,8 +126,9 @@ if __name__ == '__main__':
         width=800,
         height=250,
         x_axis_label="Letter",
-        y_axis_label="Number of swaps",
-        format_y_ticks=lambda x: "{:d}".format(x)
+        y_axis_label="Percent swappable",
+        format_y_ticks=lambda x: "{:.0f}%".format(x),
+        format_bar_value=lambda x: "{:.0f}%".format(x)
     )
 
     svg.write('test.svg')
