@@ -1,4 +1,4 @@
-from math import pow, floor, log10
+from math import pow, floor, log10, log
 
 import drawSVG
 from examples.results_to_graph import results
@@ -12,7 +12,7 @@ def create_bar_chart(data, width=300, height=200, **kwargs):
 
     padding_top = 10
     padding_right = 1
-    padding_left = 40
+    padding_left = 45
     padding_base = 40
 
     x1 = padding_left
@@ -84,8 +84,8 @@ def create_bar_chart(data, width=300, height=200, **kwargs):
         group = bars.add('g', { 'class': 'bar-group' })
         group.add('rect', { 'x': bar_x, 'y': y, 'width': bar_width, 'height': y2 - y })
 
-        # if bar_width > 20 or i % 2:
-        group.add('text', { 'x': bar_x + bar_width / 2, 'y': y2 + 6}, name)
+        if bar_width > 20 or i % 2 == 0:
+            group.add('text', { 'x': bar_x + bar_width / 2, 'y': y2 + 6}, name)
 
         if kwargs.get('format_bar_value'):
             value = kwargs['format_bar_value'](value)
@@ -105,7 +105,7 @@ if __name__ == '__main__':
     data = results['the x word']
     data = results['number of times a letter can be swapped']
     data = results['proportions_of_letters_that_can_be_replaced']
-    data = results['maximum variants for a given a word length']
+    data = results['j_variant_count_distribution']
 
     # Sort by value
     # sorted_data = [item for item in sorted(data.items(), key=lambda item: -item[1])]
@@ -119,17 +119,20 @@ if __name__ == '__main__':
     # Times by a 100
     # sorted_data = [(item[0], item[1] * 100) for item in sorted_data]
 
-    # The logarithm
+    # Take the logarithm
     # sorted_data = [(item[0], log10(item[1])) for item in sorted_data]
+
+    # Take the logarithm base 2
+    sorted_data = [(item[0], log(item[1], 2)) for item in sorted_data]
 
     svg = create_bar_chart(
         sorted_data,
         width=300,
         height=225,
-        x_axis_label="Word length",
-        y_axis_label="Maximum variants",
-        format_y_ticks=lambda x: "{:.0f}".format(x),
-        # format_bar_value=lambda x: "{:.0f}%".format(x)
+        x_axis_label="Number of variants",
+        y_axis_label="Number of words",
+        format_y_ticks=lambda x: "{:.0f}".format(pow(2, x)),
+        format_bar_value=lambda x: "{:.0f}".format(pow(2, x))
     )
 
     svg.write('test.svg')
