@@ -20,7 +20,7 @@ class SVG_Element:
         else:
             self.attributes = {}
 
-        if child:
+        if child is not None:
             self.children = [str(child)]
         else:
             self.children = []
