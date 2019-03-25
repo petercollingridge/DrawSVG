@@ -60,7 +60,7 @@ class SVG_Element:
         for key, value in self.attributes.items():
             svg_string += ' %s="%s"' % (key, value)
 
-        if not self.children:
+        if self.children is None:
             svg_string += '/>'
         else:
             svg_string += '>'
