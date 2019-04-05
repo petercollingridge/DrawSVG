@@ -1,0 +1,69 @@
+<svg viewBox="0 0 405 405" xmlns="http://www.w3.org/2000/svg">
+
+<style>
+  text {
+    text-anchor: middle;
+    dominant-baseline: middle;
+    font-size: 13px;
+  }
+  .gridline {
+    stroke-width: 1;
+    stroke: #888;
+  }
+  </style>
+
+    <line class="gridline" x1="0" x2="405" y1="15.5" y2="15.5"></line>
+    <line class="gridline" x1="15.5" x2="15.5" y1="0" y2="405"></line>
+    <text x="22.5" y="7.5">a</text>
+    <text x="7.5" y="22.5">a</text>
+    <text x="37.5" y="7.5">b</text>
+    <text x="7.5" y="37.5">b</text>
+    <text x="52.5" y="7.5">c</text>
+    <text x="7.5" y="52.5">c</text>
+    <text x="67.5" y="7.5">d</text>
+    <text x="7.5" y="67.5">d</text>
+    <text x="82.5" y="7.5">e</text>
+    <text x="7.5" y="82.5">e</text>
+    <text x="97.5" y="7.5">f</text>
+    <text x="7.5" y="97.5">f</text>
+    <text x="112.5" y="7.5">g</text>
+    <text x="7.5" y="112.5">g</text>
+    <text x="127.5" y="7.5">h</text>
+    <text x="7.5" y="127.5">h</text>
+    <text x="142.5" y="7.5">i</text>
+    <text x="7.5" y="142.5">i</text>
+    <text x="157.5" y="7.5">j</text>
+    <text x="7.5" y="157.5">j</text>
+    <text x="172.5" y="7.5">k</text>
+    <text x="7.5" y="172.5">k</text>
+    <text x="187.5" y="7.5">l</text>
+    <text x="7.5" y="187.5">l</text>
+    <text x="202.5" y="7.5">m</text>
+    <text x="7.5" y="202.5">m</text>
+    <text x="217.5" y="7.5">n</text>
+    <text x="7.5" y="217.5">n</text>
+    <text x="232.5" y="7.5">o</text>
+    <text x="7.5" y="232.5">o</text>
+    <text x="247.5" y="7.5">p</text>
+    <text x="7.5" y="247.5">p</text>
+    <text x="262.5" y="7.5">q</text>
+    <text x="7.5" y="262.5">q</text>
+    <text x="277.5" y="7.5">r</text>
+    <text x="7.5" y="277.5">r</text>
+    <text x="292.5" y="7.5">s</text>
+    <text x="7.5" y="292.5">s</text>
+    <text x="307.5" y="7.5">t</text>
+    <text x="7.5" y="307.5">t</text>
+    <text x="322.5" y="7.5">u</text>
+    <text x="7.5" y="322.5">u</text>
+    <text x="337.5" y="7.5">v</text>
+    <text x="7.5" y="337.5">v</text>
+    <text x="352.5" y="7.5">w</text>
+    <text x="7.5" y="352.5">w</text>
+    <text x="367.5" y="7.5">x</text>
+    <text x="7.5" y="367.5">x</text>
+    <text x="382.5" y="7.5">y</text>
+    <text x="7.5" y="382.5">y</text>
+    <text x="397.5" y="7.5">z</text>
+    <text x="7.5" y="397.5">z</text>
+</svg>
